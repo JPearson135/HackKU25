@@ -1,5 +1,4 @@
-from flask import Flask, request, jsonify
-import random
+from flask import Flask, request, jsonify, render_template, session
 from datetime import datetime
 import re
 import os
@@ -7,161 +6,236 @@ from dotenv import load_dotenv
 from pydantic import BaseModel
 from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import PydanticOutputParser
-from langchain.agents import create_tool_calling_agent, AgentExecutor
-from langchain.tools import Tool
-from tools import search_tool, wiki_tool, save_tool
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from flask_cors import CORS
+import logging
+import traceback
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('app.log')
+    ]
+)
 
 load_dotenv()
 
+api_key = os.getenv("ANTHROPIC_API_KEY")
+if not api_key:
+    logging.error("ANTHROPIC_API_KEY is missing. Please check your .env file.")
+elif len(api_key.strip()) < 20:
+    logging.error("ANTHROPIC_API_KEY appears to be malformed. Please check the value.")
+else:
+    logging.info("ANTHROPIC_API_KEY loaded successfully")
+
 app = Flask(__name__)
-app.secret_key = os.getenv('FLASK_SECRET_KEY', 'your_default_secret_key_here')
+# Updated CORS configuration to allow all origins for all endpoints
+CORS(app)  # This allows all origins for all routes
 
-# Initialize the research agent
-class ResearchResponse(BaseModel):
-    topic: str
-    summary: str
-    sources: list[str]
-    tools_used: list[str]
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev_secret_key')
 
-research_parser = PydanticOutputParser(pydantic_object=ResearchResponse)
-
-research_prompt = ChatPromptTemplate.from_messages(
-    [
-        (
-            "system",
-            """
-            You are a research assistant that will help generate a research paper. Answer the user query and use necessary tools. 
-            Wrap the output in this format and provide no other text\n{format_instructions}
-            """,
-        ),
-        ("placeholder", "{chat_history}"),
-        ("human", "{input}"),
-        ("placeholder", "{agent_scratchpad}"),
-    ]
-).partial(format_instructions=research_parser.get_format_instructions())
-
-tools = [search_tool, wiki_tool, save_tool]
-llm = ChatAnthropic(model="claude-3-sonnet-20240229")  # Updated model name
-
-research_agent = create_tool_calling_agent(
-    llm=llm,
-    tools=tools,
-    prompt=research_prompt
+llm = ChatAnthropic(
+    model="claude-3-7-sonnet-20250219",
+    temperature=0.7,
+    max_tokens=1024,
+    anthropic_api_key=api_key
 )
 
-research_executor = AgentExecutor(
-    agent=research_agent,
-    tools=tools,
-    verbose=True,
-    handle_parsing_errors=True,
-    return_intermediate_steps=True
-)
+CRISIS_KEYWORDS = [
+    "suicide", "kill myself", "end my life", "don't want to live",
+    "hurt myself", "self-harm", "die", "death"
+]
 
-# Therapeutic responses
-THERAPEUTIC_RESPONSES = {
-    "greeting": [
-        "Hello, I'm here to help with your research or just listen. How can I assist you today?",
-        "Welcome. I can help with research or just chat. What would you like to do?",
-        "Hi there. I'm here to help with research or provide support. What's on your mind?"
-    ],
-    "research": [
-        "I'll research that for you. Just a moment...",
-        "Let me look into that topic for you...",
-        "I'll gather some information about that..."
-    ],
-    "fallback": [
-        "I'm not sure I understand. Would you like help with research or just to talk?",
-        "Could you clarify? I can help with research or just listen.",
-        "I want to make sure I help appropriately. Are you looking for information or support?"
-    ]
-}
+CRISIS_RESOURCES = """
+If you're experiencing a crisis or having thoughts of harming yourself:
+- National Suicide Prevention Lifeline: 988 or 1-800-273-8255
+- Crisis Text Line: Text HOME to 741741
+- Emergency Services: Call 911 or go to your nearest emergency room
+- International Association for Suicide Prevention: https://www.iasp.info/resources/Crisis_Centres/
+"""
 
-user_sessions = {}
+THERAPEUTIC_PROMPT = """
+You are MindfulMate, a compassionate AI assistant providing:
+- Mental health support (anxiety, depression, stress)
+- Emotional guidance (relationships, grief, self-esteem)
+- Life advice (decision-making, motivation, personal growth)
 
-def detect_intent(message):
-    """Detect if the user wants research help or therapeutic conversation"""
-    message_lower = message.lower()
-    
-    research_keywords = [
-        "research", "find information", "look up", "search for",
-        "what is", "who is", "when was", "how does", "tell me about"
-    ]
-    
-    if any(keyword in message_lower for keyword in research_keywords):
-        return "research"
-    return "chat"
+Guidelines:
+1. Always respond with empathy and validation first
+2. Ask thoughtful questions to understand the situation
+3. Offer evidence-based coping strategies when appropriate
+4. Structure your response in these sections when applicable:
+   - Understanding (validating their feelings)
+   - Perspective (offering a thoughtful view)
+   - Practical Tips (2-3 specific actionable suggestions)
+   - Question (one thoughtful question to promote reflection)
+5. Maintain professional boundaries and never claim to replace therapy
+6. For crisis situations:
+   - Provide immediate validation
+   - Offer crisis resources
+   - Encourage contacting professionals
 
-@app.route('/chat', methods=['POST'])
-def chat():
-    data = request.get_json()
-    user_message = data.get('message')
-    user_id = data.get('user_id', 'default_user')
+Important disclaimers to remember:
+- You are not a licensed therapist or healthcare provider
+- Your suggestions are not professional medical advice
+- Users should consult qualified professionals for serious concerns
+"""
 
-    if not user_message:
-        return jsonify({"error": "No message received"}), 400
-    
+conversation_histories = {}
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+@app.route("/test-llm")
+def test_llm():
     try:
-        intent = detect_intent(user_message)
-        
-        if intent == "research":
-            response = random.choice(THERAPEUTIC_RESPONSES["research"])
-            
-            try:
-                raw_response = research_executor.invoke({"input": user_message})
-                
-                if isinstance(raw_response['output'], dict):
-                    structured_response = raw_response['output']
-                    response = f"Here's what I found:\n\n{structured_response.get('summary', 'No summary available')}"
-                    if structured_response.get('sources'):
-                        response += f"\n\nSources: {', '.join(structured_response['sources'])}"
-                else:
-                    response = raw_response['output']
-                    
-            except Exception as e:
-                print("Error in research execution:", e)
-                response = "I encountered an error while researching that topic. Could you try rephrasing your question?"
-            
-            return jsonify({
-                "response": response,
-                "user_id": user_id,
-                "timestamp": datetime.now().isoformat()
-            })
-        else:
-            # Therapeutic chat response
-            if user_id not in user_sessions:
-                response = random.choice(THERAPEUTIC_RESPONSES["greeting"])
-                user_sessions[user_id] = {"first_seen": datetime.now()}
-            else:
-                response = random.choice([
-                    "I'm here to listen. How does that make you feel?",
-                    "That's interesting. Tell me more about that.",
-                    "I understand. Would you like to explore this further?"
-                ])
-            
-            return jsonify({
-                "response": response,
-                "user_id": user_id,
-                "timestamp": datetime.now().isoformat()
-            })
-            
-    except Exception as e:
-        print(f"Error in chat endpoint: {e}")
+        test = llm.invoke([HumanMessage(content="Hello")])
         return jsonify({
-            "response": "I'm having trouble processing that. Could you try again?",
-            "user_id": user_id,
-            "error": "internal_server_error"
+            "success": True,
+            "response": str(test.content),
+            "model": llm.model
+        })
+    except Exception as e:
+        logging.error("LLM Test Error: %s", str(e))
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "model": llm.model if hasattr(llm, 'model') else 'unknown'
+        }), 500
+        
+@app.route("/test-llm-detailed")
+def test_llm_detailed():
+    try:
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+        if not api_key:
+            return jsonify({
+                "success": False,
+                "error": "API key not found in environment"
+            }), 500
+            
+        key_preview = f"{api_key[:4]}...{api_key[-4:]}" if len(api_key) > 8 else "invalid_format"
+        
+        test = llm.invoke([HumanMessage(content="Hello")])
+        return jsonify({
+            "success": True,
+            "response": str(test.content),
+            "model": llm.model,
+            "key_format": key_preview
+        })
+    except Exception as e:
+        logging.error("LLM Test Error: %s", str(e))
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "model": llm.model if hasattr(llm, 'model') else 'unknown',
+            "key_format": key_preview if 'key_preview' in locals() else "unknown"
         }), 500
 
-@app.route('/session/<user_id>', methods=['GET'])
-def get_session(user_id):
-    if user_id in user_sessions:
+def check_for_crisis(message):
+    message_lower = message.lower()
+    for keyword in CRISIS_KEYWORDS:
+        if keyword in message_lower:
+            return True
+    return False
+
+@app.route("/chat", methods=["POST"])
+def chat():
+    try:
+        logging.debug("Received a request to /chat endpoint")
+        data = request.get_json()
+        if not data:
+            logging.error("No data received in the request")
+            return jsonify({"error": "No data received"}), 400
+            
+        user_message = data.get('message', '').strip()
+        user_id = data.get('user_id', 'anonymous')
+        
+        logging.debug(f"User ID: {user_id}, User Message: {user_message}")
+        
+        if not user_message:
+            logging.error("Empty message received")
+            return jsonify({"error": "Empty message"}), 400
+
+        if user_id not in conversation_histories:
+            logging.debug("Initializing conversation history for new user")
+            conversation_histories[user_id] = [
+                SystemMessage(content=THERAPEUTIC_PROMPT)
+            ]
+        
+        conversation_histories[user_id].append(HumanMessage(content=user_message))
+        
+        is_crisis = check_for_crisis(user_message)
+        logging.debug(f"Crisis detected: {is_crisis}")
+        
+        if len(conversation_histories[user_id]) > 11:
+            logging.debug("Trimming conversation history to last 10 messages")
+            conversation_histories[user_id] = [
+                conversation_histories[user_id][0]
+            ] + conversation_histories[user_id][-10:]
+        
+        try:
+            logging.debug("Sending conversation history to LLM")
+            response = llm.invoke(conversation_histories[user_id])
+            
+            if hasattr(response, 'content'):
+                response_text = response.content
+            else:
+                response_text = str(response)
+            
+            logging.debug(f"LLM Response: {response_text[:100]}...")
+            
+            conversation_histories[user_id].append(AIMessage(content=response_text))
+            
+            if is_crisis:
+                response_text += "\n\n" + CRISIS_RESOURCES
+            
+            return jsonify({
+                "response": response_text,
+                "status": "success",
+                "is_crisis": is_crisis
+            })
+            
+        except Exception as e:
+            logging.error(f"LLM API Error: {str(e)}")
+            error_message = str(e).lower()
+            if "api key" in error_message or "auth" in error_message or "401" in error_message:
+                return jsonify({
+                    "response": "There's an issue with the AI service authentication. Please contact support.",
+                    "status": "error",
+                    "error_details": "API authentication error"
+                }), 500
+            else:
+                raise
+                
+    except Exception as e:
+        logging.error(f"Error in /chat endpoint: {str(e)}")
+        logging.error(traceback.format_exc())
         return jsonify({
-            "status": "success",
-            "session": user_sessions[user_id]
-        })
-    return jsonify({"status": "session_not_found"}), 404
+            "response": "I encountered an error processing your request. Please try again.",
+            "status": "error",
+            "error_details": str(e)
+        }), 500
+
+@app.route("/feedback", methods=["POST"])
+def handle_feedback():
+    try:
+        data = request.get_json()
+        logging.info(f"Received feedback: {data}")
+        return jsonify({"status": "success", "message": "Feedback received"})
+    except Exception as e:
+        logging.error(f"Error processing feedback: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    try:
+        print("Testing API connection...")
+        test = llm.invoke([HumanMessage(content="Hello")])
+        print(f"API Test Success: {test.content[:50]}...")
+    except Exception as e:
+        print(f"API Test Failed: {str(e)}")
+        
+    app.run(host='0.0.0.0', port=5000, debug=True)

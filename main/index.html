@@ -1,251 +1,98 @@
-<!-- <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Therapeutic AI Agent</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-            color: #333;
-        }
-        h1 {
-            color: #2c3e50;
-            text-align: center;
-        }
-        #chat-container {
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 20px;
-            margin-bottom: 20px;
-            height: 400px;
-            overflow-y: auto;
-        }
-        .message {
-            margin-bottom: 15px;
-            padding: 10px 15px;
-            border-radius: 18px;
-            max-width: 70%;
-        }
-        .user-message {
-            background-color: #e3f2fd;
-            margin-left: auto;
-            border-bottom-right-radius: 5px;
-        }
-        .ai-message {
-            background-color: #f1f1f1;
-            margin-right: auto;
-            border-bottom-left-radius: 5px;
-        }
-        #input-container {
-            display: flex;
-            gap: 10px;
-        }
-        #userInput {
-            flex-grow: 1;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        button {
-            padding: 10px 20px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #2980b9;
-        }
-        .timestamp {
-            font-size: 0.8em;
-            color: #777;
-            margin-top: 5px;
-        }
-    </style>
-</head>
-<body>
-    <h1>Therapeutic AI Companion</h1>
-    <div id="chat-container"></div>
-    <div id="input-container">
-        <input type="text" id="userInput" placeholder="Share what's on your mind..." />
-        <button onclick="sendMessage()">Send</button>
-    </div>
-
-    <script>
-        let userId = 'user_' + Math.random().toString(36).substr(2, 9);
-        
-        // Allow Enter key to send message
-        document.getElementById('userInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                sendMessage();
-            }
-        });
-
-        async function sendMessage() {
-            const userInput = document.getElementById('userInput');
-            const userMessage = userInput.value.trim();
-            
-            if (!userMessage) return;
-            
-            // Add user message to chat
-            addMessageToChat('user', userMessage);
-            userInput.value = '';
-            
-            // Show typing indicator
-            const typingIndicator = addTypingIndicator();
-            
-            try {
-                const response = await fetch("http://127.0.0.1:5000/chat", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ 
-                        message: userMessage,
-                        user_id: userId
-                    })
-                });
-                
-                // Remove typing indicator
-                chatContainer.removeChild(typingIndicator);
-                
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                
-                const data = await response.json();
-                addMessageToChat('ai', data.response);
-                
-            } catch (error) {
-                console.error('Error:', error);
-                // Remove typing indicator if still present
-                if (typingIndicator.parentNode) {
-                    chatContainer.removeChild(typingIndicator);
-                }
-                
-                // Provide contextually appropriate fallback responses
-                const fallbackResponses = [
-                    "I'm having trouble understanding that. Could you rephrase it?",
-                    "Let me think differently about that. Could you tell me more?",
-                    "I want to make sure I understand. What else can you share about this?",
-                    "That's an important thing to discuss. How does this make you feel?"
-                ];
-                
-                const randomFallback = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
-                addMessageToChat('ai', randomFallback);
-            }
-        }
-
-        function addTypingIndicator() {
-            const chatContainer = document.getElementById('chat-container');
-            const typingDiv = document.createElement('div');
-            typingDiv.classList.add('message', 'ai-message');
-            typingDiv.id = 'typing-indicator';
-            typingDiv.innerHTML = '<em>AI is thinking...</em>';
-            chatContainer.appendChild(typingDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-            return typingDiv;
-        }
-        
-        function addMessageToChat(sender, message) {
-            const chatContainer = document.getElementById('chat-container');
-            const messageDiv = document.createElement('div');
-            
-            messageDiv.classList.add('message');
-            messageDiv.classList.add(sender + '-message');
-            messageDiv.innerHTML = `
-                <div><strong>${sender === 'user' ? 'You' : 'Alpha'}:</strong> ${message}</div>
-                <div class="timestamp">${new Date().toLocaleTimeString()}</div>
-            `;
-            
-            chatContainer.appendChild(messageDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-        
-        // Initial greeting
-        window.onload = function() {
-            addMessageToChat('ai', "Hello, I'm here to listen. How are you feeling today?");
-        };
-    </script>
-</body>
-</html> -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Therapeutic AI Agent</title>
+    <title>MindfulMate - Therapeutic AI Companion</title>
     <style>
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
             line-height: 1.6;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: #f8f9fa;
             color: #333;
         }
-        h1 {
-            color: #2c3e50;
+        header {
             text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #4a6fa5;
+            margin-bottom: 10px;
+        }
+        .tagline {
+            color: #666;
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+        .disclaimer {
+            font-size: 0.8em;
+            color: #666;
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
         }
         #chat-container {
             background-color: white;
             border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
             padding: 20px;
             margin-bottom: 20px;
-            height: 400px;
+            height: 500px;
             overflow-y: auto;
         }
         .message {
             margin-bottom: 15px;
             padding: 10px 15px;
             border-radius: 18px;
-            max-width: 70%;
+            max-width: 75%;
+            position: relative;
         }
         .user-message {
-            background-color: #e3f2fd;
+            background-color: #dcedff;
             margin-left: auto;
             border-bottom-right-radius: 5px;
         }
         .ai-message {
-            background-color: #f1f1f1;
+            background-color: #f0f0f0;
             margin-right: auto;
             border-bottom-left-radius: 5px;
+        }
+        .crisis-message {
+            border: 1px solid #e57373;
+            background-color: #ffebee;
+        }
+        .error-message {
+            border: 1px solid #ff9800;
+            background-color: #fff3e0;
         }
         #input-container {
             display: flex;
             gap: 10px;
+            margin-bottom: 15px;
         }
         #userInput {
             flex-grow: 1;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #ddd;
             border-radius: 5px;
             font-size: 16px;
         }
         button {
             padding: 10px 20px;
-            background-color: #3498db;
+            background-color: #4a6fa5;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
+            transition: background-color 0.2s;
         }
         button:hover {
-            background-color: #2980b9;
+            background-color: #3a5a80;
         }
         .timestamp {
             font-size: 0.8em;
@@ -256,25 +103,146 @@
             color: #666;
             font-style: italic;
         }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .footer-links a {
+            color: #4a6fa5;
+            margin: 0 10px;
+            text-decoration: none;
+        }
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        .feedback {
+            display: flex;
+            justify-content: flex-end;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        .feedback button {
+            padding: 2px 8px;
+            background-color: transparent;
+            color: #777;
+            border: 1px solid #ddd;
+            font-size: 12px;
+        }
+        .feedback button:hover {
+            background-color: #f0f0f0;
+        }
+        .feedback button.active {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+        .format-text {
+            white-space: pre-wrap;
+        }
+        #connection-status {
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #666;
+            display: none;
+        }
+        .status-error {
+            color: #d32f2f;
+        }
+        .status-ok {
+            color: #388e3c;
+        }
     </style>
 </head>
 <body>
-    <h1>Therapeutic AI Companion</h1>
+    <header>
+        <h1>MindfulMate</h1>
+        <div class="tagline">A compassionate AI companion for emotional support and guidance</div>
+        <div class="disclaimer">
+            <strong>Important:</strong> MindfulMate is an AI assistant and not a substitute for professional therapy or medical advice. 
+            In case of emergency or crisis, please contact mental health professionals or emergency services.
+            <a href="/disclaimer" target="_blank">Read full disclaimer</a>
+        </div>
+        <div id="connection-status"></div>
+    </header>
+    
     <div id="chat-container"></div>
+    
     <div id="input-container">
         <input type="text" id="userInput" placeholder="Share what's on your mind..." />
         <button onclick="sendMessage()">Send</button>
     </div>
 
+    <footer>
+        <div class="footer-links">
+            <a href="/disclaimer" target="_blank">Disclaimer</a>
+            <a href="/resources" target="_blank">Mental Health Resources</a>
+            <a href="javascript:void(0)" onclick="clearChat()">Clear Chat</a>
+            <a href="javascript:void(0)" onclick="testConnection()">Test Connection</a>
+        </div>
+        <p>© 2025 MindfulMate - Your wellness companion</p>
+    </footer>
+
     <script>
-        let userId = 'user_' + Math.random().toString(36).substr(2, 9);
+        let userId = localStorage.getItem('mindfulmate_user_id');
+        if (!userId) {
+            userId = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('mindfulmate_user_id', userId);
+        }
         
-        // Allow Enter key to send message
+        // Get the current base URL
+        const baseUrl = "http://127.0.0.1:5000";
+        
+        window.addEventListener('load', function() {
+            testConnection();
+        });
+        
         document.getElementById('userInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 sendMessage();
             }
         });
+
+        async function testConnection() {
+            const statusElement = document.getElementById('connection-status');
+            statusElement.style.display = 'block';
+            statusElement.innerHTML = 'Testing connection...';
+            
+            try {
+                const response = await fetch(`${baseUrl}/test-llm-detailed`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    throw new Error("Response is not JSON");
+                }
+                
+                const data = await response.json();
+                
+                if(data.success) {
+                    statusElement.innerHTML = '✅ API connection is working';
+                    statusElement.className = 'status-ok';
+                    setTimeout(() => {
+                        statusElement.style.display = 'none';
+                    }, 5000);
+                } else {
+                    statusElement.innerHTML = '❌ API connection issue: ' + data.error;
+                    statusElement.className = 'status-error';
+                }
+            } catch (error) {
+                statusElement.innerHTML = '❌ Connection test failed: ' + error;
+                statusElement.className = 'status-error';
+            }
+        }
+
+        function clearChat() {
+            if (confirm("Are you sure you want to clear the chat history?")) {
+                document.getElementById('chat-container').innerHTML = '';
+                addMessageToChat('ai', "Hello, I'm MindfulMate. I'm here to listen and provide support. How are you feeling today?");
+            }
+        }
 
         async function sendMessage() {
             const userInput = document.getElementById('userInput');
@@ -282,15 +250,14 @@
             
             if (!userMessage) return;
             
-            // Add user message to chat
-            addMessageToChat('user', userMessage);
+            const messageId = 'msg_' + Date.now();
+            addMessageToChat('user', userMessage, messageId);
             userInput.value = '';
             
-            // Show typing indicator
             const typingIndicator = addTypingIndicator();
             
             try {
-                const response = await fetch("http://127.0.0.1:5000/chat", {
+                const response = await fetch(`${baseUrl}/chat`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -301,37 +268,50 @@
                     })
                 });
                 
-                // Remove typing indicator
                 const chatContainer = document.getElementById('chat-container');
-                if (typingIndicator.parentNode) {
+                if (typingIndicator && typingIndicator.parentNode) {
                     chatContainer.removeChild(typingIndicator);
                 }
                 
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    const errorData = await response.json();
+                    let errorMessage = "I'm having trouble processing your request right now.";
+                    if (errorData.error_details && errorData.error_details.includes("API authentication")) {
+                        errorMessage = "There seems to be an issue with the AI service connection. Please try again later or contact support.";
+                    }
+                    
+                    addMessageToChat('ai', errorMessage, null, false, true);
+                    throw new Error(`API Error: ${response.status}`);
                 }
                 
                 const data = await response.json();
-                addMessageToChat('ai', data.response);
+                
+                if (data.response) {
+                    const responseId = 'msg_' + Date.now();
+                    const isCrisis = data.is_crisis || false;
+                    addMessageToChat('ai', data.response, responseId, isCrisis);
+                } else {
+                    throw new Error("No response in API data");
+                }
                 
             } catch (error) {
-                console.error('Error:', error);
-                // Remove typing indicator if still present
                 const chatContainer = document.getElementById('chat-container');
-                if (typingIndicator.parentNode) {
+                if (typingIndicator && typingIndicator.parentNode) {
                     chatContainer.removeChild(typingIndicator);
                 }
                 
-                // Provide contextually appropriate fallback responses
-                const fallbackResponses = [
-                    "I'm having trouble understanding that. Could you rephrase it?",
-                    "Let me think differently about that. Could you tell me more?",
-                    "I want to make sure I understand. What else can you share about this?",
-                    "That's an important thing to discuss. How does this make you feel?"
-                ];
-                
-                const randomFallback = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
-                addMessageToChat('ai', randomFallback);
+                let errorMessage;
+                if (error.message && error.message.includes("API Error")) {
+                    return;
+                } else {
+                    errorMessage = "I'm having trouble connecting to my AI service. Let's try again in a moment.";
+                    addMessageToChat('ai', errorMessage, null, false, true);
+                    
+                    document.getElementById('connection-status').innerHTML = 
+                        '❌ Connection issue detected. <a href="javascript:void(0)" onclick="testConnection()">Test connection</a>';
+                    document.getElementById('connection-status').style.display = 'block';
+                    document.getElementById('connection-status').className = 'status-error';
+                }
             }
         }
 
@@ -340,30 +320,87 @@
             const typingDiv = document.createElement('div');
             typingDiv.classList.add('message', 'ai-message');
             typingDiv.id = 'typing-indicator';
-            typingDiv.innerHTML = '<em>AI is thinking...</em>';
+            typingDiv.innerHTML = '<em>MindfulMate is thinking...</em>';
             chatContainer.appendChild(typingDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
             return typingDiv;
         }
         
-        function addMessageToChat(sender, message) {
+        function addMessageToChat(sender, message, messageId, isCrisis = false, isError = false) {
             const chatContainer = document.getElementById('chat-container');
             const messageDiv = document.createElement('div');
             
             messageDiv.classList.add('message');
             messageDiv.classList.add(sender + '-message');
+            if (isCrisis && sender === 'ai') {
+                messageDiv.classList.add('crisis-message');
+            }
+            if (isError && sender === 'ai') {
+                messageDiv.classList.add('error-message');
+            }
+            
+            messageDiv.setAttribute('data-message-id', messageId || '');
+            
+            const formattedMessage = message.replace(/\n/g, '<br>');
+            
             messageDiv.innerHTML = `
-                <div><strong>${sender === 'user' ? 'You' : 'AI Companion'}:</strong> ${message}</div>
+                <div class="format-text"><strong>${sender === 'user' ? 'You' : 'MindfulMate'}:</strong> ${formattedMessage}</div>
                 <div class="timestamp">${new Date().toLocaleTimeString()}</div>
             `;
+            
+            if (sender === 'ai' && messageId && !isError) {
+                const feedbackDiv = document.createElement('div');
+                feedbackDiv.className = 'feedback';
+                feedbackDiv.innerHTML = `
+                    <button onclick="provideFeedback('${messageId}', 'helpful')">Helpful</button>
+                    <button onclick="provideFeedback('${messageId}', 'neutral')">Neutral</button>
+                    <button onclick="provideFeedback('${messageId}', 'unhelpful')">Unhelpful</button>
+                `;
+                messageDiv.appendChild(feedbackDiv);
+            }
             
             chatContainer.appendChild(messageDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
         
-        // Initial greeting
+        async function provideFeedback(messageId, rating) {
+            try {
+                const messageDiv = document.querySelector(`[data-message-id="${messageId}"]`);
+                if (messageDiv) {
+                    const buttons = messageDiv.querySelectorAll('.feedback button');
+                    buttons.forEach(btn => {
+                        btn.classList.remove('active');
+                        if (btn.textContent.toLowerCase() === rating) {
+                            btn.classList.add('active');
+                        }
+                    });
+                }
+                
+                const response = await fetch(`${baseUrl}/feedback`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        message_id: messageId,
+                        rating: rating
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+                
+                console.log("Feedback submitted successfully");
+                
+            } catch (error) {
+                console.error("Error submitting feedback:", error);
+            }
+        }
+        
         window.onload = function() {
-            addMessageToChat('ai', "Hello, I'm here to listen and help with research. How can I assist you today?");
+            addMessageToChat('ai', "Hello, I'm MindfulMate. I'm here to listen and provide support. How are you feeling today?");
         };
     </script>
 </body>
