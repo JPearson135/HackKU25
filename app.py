@@ -48,7 +48,7 @@ llm = ChatAnthropic(
     model="claude-3-sonnet-20240229",
     temperature=0.7,
     max_tokens=1024,
-    api_key=api_key
+    anthropic_api_key=api_key 
 )
 
 CRISIS_KEYWORDS = [
