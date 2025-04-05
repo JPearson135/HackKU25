@@ -37,6 +37,14 @@ CORS(app)
 
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev_secret_key')
 
+@app.before_request
+def enforce_https():
+    """Redirect HTTP to HTTPS and www to non-www"""
+    if request.url.startswith('http://'):
+        return redirect(request.url.replace('http://', 'https://', 1), code=301
+    if request.host.startswith('www.'):
+        return redirect(request.url.replace('www.', '', 1), code=301)
+
 llm = ChatAnthropic(
     model="claude-3-7-sonnet-20250219",
     temperature=0.7,
@@ -250,4 +258,4 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"API Test Failed: {str(e)}")
         
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False)
