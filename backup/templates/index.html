@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindfulMate - Therapeutic AI Companion</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        .main-content {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+        }
+        
+        .chat-area {
+            flex: 2;
+            min-width: 0;
+        }
+        
+        .resources-area {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #4a6fa5;
+            margin-bottom: 10px;
+        }
+        .tagline {
+            color: #666;
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+        .disclaimer {
+            font-size: 0.8em;
+            color: #666;
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        #chat-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            height: 500px;
+            overflow-y: auto;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 75%;
+            position: relative;
+        }
+        .user-message {
+            background-color: #dcedff;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+        .ai-message {
+            background-color: #f0f0f0;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+        }
+        .crisis-message {
+            border: 1px solid #e57373;
+            background-color: #ffebee;
+        }
+        .error-message {
+            border: 1px solid #ff9800;
+            background-color: #fff3e0;
+        }
+        #input-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        #userInput {
+            flex-grow: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #3a5a80;
+        }
+        .timestamp {
+            font-size: 0.8em;
+            color: #777;
+            margin-top: 5px;
+        }
+        #typing-indicator {
+            color: #666;
+            font-style: italic;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .footer-links a {
+            color: #4a6fa5;
+            margin: 0 10px;
+            text-decoration: none;
+        }
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        .feedback {
+            display: flex;
+            justify-content: flex-end;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        .feedback button {
+            padding: 2px 8px;
+            background-color: transparent;
+            color: #777;
+            border: 1px solid #ddd;
+            font-size: 12px;
+        }
+        .feedback button:hover {
+            background-color: #f0f0f0;
+        }
+        .feedback button.active {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+        .format-text {
+            white-space: pre-wrap;
+        }
+        #connection-status {
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #666;
+            display: none;
+        }
+        .status-error {
+            color: #d32f2f;
+        }
+        .status-ok {
+            color: #388e3c;
+        }
+        
+        /* Resources/Suggestions Panel Styles */
+        .resources-panel {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            padding: 20px;
+            height: 500px;
+            overflow-y: auto;
+        }
+        
+        .resources-title {
+            color: #4a6fa5;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .suggestions-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .suggestion-item {
+            background-color: #f0f7ff;
+            border-left: 3px solid #4a6fa5;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 0 5px 5px 0;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .resources-area {
+                order: -1;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>MindfulMate</h1>
+        <div class="tagline">A compassionate AI companion for emotional support and guidance</div>
+        <div class="disclaimer">
+            <strong>Important:</strong> MindfulMate is an AI assistant and not a substitute for professional therapy or medical advice. 
+            In case of emergency or crisis, please contact mental health professionals or emergency services.
+            <a href="disclaimer.html" target="_blank">Read full disclaimer</a>
+        </div>
+        <div id="connection-status"></div>
+    </header>
+    
+    <div class="main-content">
+        <div class="chat-area">
+            <div id="chat-container"></div>
+            
+            <div id="input-container">
+                <input type="text" id="userInput" placeholder="Share what's on your mind..." />
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+        
+        <div class="resources-area">
+            <div class="resources-panel">
+                <h3 class="resources-title">Helpful Suggestions</h3>
+                <ul id="suggestions-list" class="suggestions-list">
+                    <!-- Suggestions will be added here dynamically -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-links">
+            <a href="disclaimer.html" target="_blank">Disclaimer</a>
+            <a href="resources.html" target="_blank">Mental Health Resources</a>
+            <a href="javascript:void(0)" onclick="clearChat()">Clear Chat</a>
+            <a href="javascript:void(0)" onclick="testConnection()">Test Connection</a>
+        </div>
+        <p>© 2025 MindfulMate - Your wellness companion</p>
+    </footer>
+
+    <script>
+        let userId = localStorage.getItem('mindfulmate_user_id');
+        if (!userId) {
+            userId = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('mindfulmate_user_id', userId);
+        }
+        
+        //const baseUrl = "http://127.0.0.1:5000";
+        const baseUrl = "https://feelgoodbot.us";
+
+        window.addEventListener('load', function() {
+            testConnection();
+            // Add initial suggestion
+            addSuggestion("Take a few deep breaths when feeling overwhelmed");
+        });
+        
+        document.getElementById('userInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        async function testConnection() {
+            const statusElement = document.getElementById('connection-status');
+            statusElement.style.display = 'block';
+            statusElement.innerHTML = 'Testing connection...';
+            
+            try {
+                const response = await fetch(`${baseUrl}/test-llm-detailed`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    throw new Error("Response is not JSON");
+                }
+                
+                const data = await response.json();
+                
+                if(data.success) {
+                    statusElement.innerHTML = '✅ API connection is working';
+                    statusElement.className = 'status-ok';
+                    setTimeout(() => {
+                        statusElement.style.display = 'none';
+                    }, 5000);
+                } else {
+                    statusElement.innerHTML = '❌ API connection issue: ' + data.error;
+                    statusElement.className = 'status-error';
+                }
+            } catch (error) {
+                statusElement.innerHTML = '❌ Connection test failed: ' + error;
+                statusElement.className = 'status-error';
+            }
+        }
+
+        function clearChat() {
+            if (confirm("Are you sure you want to clear the chat history?")) {
+                document.getElementById('chat-container').innerHTML = '';
+                document.getElementById('suggestions-list').innerHTML = '';
+                addMessageToChat('ai', "Hello, I'm MindfulMate. I'm here to listen and provide support. How are you feeling today?");
+                // Add back the initial suggestion
+                addSuggestion("Take a few deep breaths when feeling overwhelmed");
+            }
+        }
+
+        function addSuggestion(text) {
+            const suggestionsList = document.getElementById('suggestions-list');
+            const li = document.createElement('li');
+            li.className = 'suggestion-item';
+            li.textContent = text;
+            suggestionsList.appendChild(li);
+        }
+
+        async function sendMessage() {
+            const userInput = document.getElementById('userInput');
+            const userMessage = userInput.value.trim();
+            
+            if (!userMessage) return;
+            
+            const messageId = 'msg_' + Date.now();
+            addMessageToChat('user', userMessage, messageId);
+            userInput.value = '';
+            
+            const typingIndicator = addTypingIndicator();
+            
+            try {
+                const response = await fetch(`${baseUrl}/chat`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ 
+                        message: userMessage,
+                        user_id: userId
+                    })
+                });
+                
+                const chatContainer = document.getElementById('chat-container');
+                if (typingIndicator && typingIndicator.parentNode) {
+                    chatContainer.removeChild(typingIndicator);
+                }
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    let errorMessage = "I'm having trouble processing your request right now.";
+                    if (errorData.error_details && errorData.error_details.includes("API authentication")) {
+                        errorMessage = "There seems to be an issue with the AI service connection. Please try again later or contact support.";
+                    }
+                    
+                    addMessageToChat('ai', errorMessage, null, false, true);
+                    throw new Error(`API Error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.response) {
+                    const responseId = 'msg_' + Date.now();
+                    const isCrisis = data.is_crisis || false;
+                    addMessageToChat('ai', data.response, responseId, isCrisis);
+                    
+                    // Extract and add suggestions from the AI response
+                    extractAndAddSuggestions(data.response);
+                } else {
+                    throw new Error("No response in API data");
+                }
+                
+            } catch (error) {
+                const chatContainer = document.getElementById('chat-container');
+                if (typingIndicator && typingIndicator.parentNode) {
+                    chatContainer.removeChild(typingIndicator);
+                }
+                
+                let errorMessage;
+                if (error.message && error.message.includes("API Error")) {
+                    return;
+                } else {
+                    errorMessage = "I'm having trouble connecting to my AI service. Let's try again in a moment.";
+                    addMessageToChat('ai', errorMessage, null, false, true);
+                    
+                    document.getElementById('connection-status').innerHTML = 
+                        '❌ Connection issue detected. <a href="javascript:void(0)" onclick="testConnection()">Test connection</a>';
+                    document.getElementById('connection-status').style.display = 'block';
+                    document.getElementById('connection-status').className = 'status-error';
+                }
+            }
+        }
+
+        function extractAndAddSuggestions(aiResponse) {
+            // Patterns to identify key sections in the AI's response
+            const sectionPatterns = [
+                /Practical Tips:([\s\S]*?)(?=\n\n|$)/i,
+                /Suggestions:([\s\S]*?)(?=\n\n|$)/i,
+                /You can try:([\s\S]*?)(?=\n\n|$)/i,
+                /Here are some things to try:([\s\S]*?)(?=\n\n|$)/i
+            ];
+            
+            const suggestionsList = document.getElementById('suggestions-list');
+            const uniqueSuggestions = new Set();
+            
+            // Get existing suggestions to avoid duplicates
+            const existingItems = suggestionsList.querySelectorAll('.suggestion-item');
+            existingItems.forEach(item => {
+                uniqueSuggestions.add(item.textContent.trim());
+            });
+            
+            // Extract sections that likely contain suggestions
+            let suggestionText = '';
+            sectionPatterns.forEach(pattern => {
+                const match = aiResponse.match(pattern);
+                if (match && match[1]) {
+                    suggestionText += '\n' + match[1].trim();
+                }
+            });
+            
+            // If no specific sections found, look for bullet points throughout
+            if (!suggestionText) {
+                const bulletPoints = aiResponse.matchAll(/- (.*?)(?=\n|$)/g);
+                for (const match of bulletPoints) {
+                    if (match[1]) {
+                        suggestionText += '\n' + match[1].trim();
+                    }
+                }
+            }
+            
+            // Process the extracted text to create concise suggestions
+            if (suggestionText) {
+                // Split into individual suggestions
+                let items = suggestionText.split('\n').filter(item => item.trim().length > 0);
+                
+                // Process each item to make it more concise
+                items.forEach(item => {
+                    // Remove any numbering or bullets
+                    item = item.replace(/^\d+\.\s*/, '').replace(/^-\s*/, '').trim();
+                    
+                    // Simplify common patterns
+                    item = item.replace(/^Try\s+/i, '');
+                    item = item.replace(/^Consider\s+/i, '');
+                    item = item.replace(/^You might\s+/i, '');
+                    
+                    // Remove unnecessary qualifiers
+                    item = item.replace(/such as.*$/i, '');
+                    item = item.replace(/for example.*$/i, '');
+                    item = item.replace(/like.*$/i, '');
+                    
+                    // Trim to reasonable length and remove trailing punctuation
+                    if (item.length > 100) {
+                        item = item.substring(0, 100) + '...';
+                    }
+                    item = item.replace(/[.,;:]$/, '');
+                    
+                    // Skip crisis resources and very short suggestions
+                    if (item.length > 15 && 
+                        !item.includes("988") && 
+                        !item.includes("911") &&
+                        !item.includes("emergency") &&
+                        !item.includes("lifeline")) {
+                        
+                        // Capitalize first letter
+                        if (item.length > 0) {
+                            item = item.charAt(0).toUpperCase() + item.slice(1);
+                        }
+                        
+                        uniqueSuggestions.add(item);
+                    }
+                });
+            }
+            
+            // Clear and repopulate the list to maintain order
+            suggestionsList.innerHTML = '';
+            
+            // Convert to array and sort by length (shortest first)
+            const sortedSuggestions = Array.from(uniqueSuggestions).sort((a, b) => a.length - b.length);
+            
+            // Add all unique suggestions to the list (limit to 10)
+            sortedSuggestions.slice(0, 10).forEach(suggestion => {
+                addSuggestion(suggestion);
+            });
+        }
+
+        function addTypingIndicator() {
+            const chatContainer = document.getElementById('chat-container');
+            const typingDiv = document.createElement('div');
+            typingDiv.classList.add('message', 'ai-message');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.innerHTML = '<em>MindfulMate is thinking...</em>';
+            chatContainer.appendChild(typingDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return typingDiv;
+        }
+        
+        function addMessageToChat(sender, message, messageId, isCrisis = false, isError = false) {
+            const chatContainer = document.getElementById('chat-container');
+            const messageDiv = document.createElement('div');
+            
+            messageDiv.classList.add('message');
+            messageDiv.classList.add(sender + '-message');
+            if (isCrisis && sender === 'ai') {
+                messageDiv.classList.add('crisis-message');
+            }
+            if (isError && sender === 'ai') {
+                messageDiv.classList.add('error-message');
+            }
+            
+            messageDiv.setAttribute('data-message-id', messageId || '');
+            
+            const formattedMessage = message.replace(/\n/g, '<br>');
+            
+            messageDiv.innerHTML = `
+                <div class="format-text"><strong>${sender === 'user' ? 'You' : 'MindfulMate'}:</strong> ${formattedMessage}</div>
+                <div class="timestamp">${new Date().toLocaleTimeString()}</div>
+            `;
+            
+            if (sender === 'ai' && messageId && !isError) {
+                const feedbackDiv = document.createElement('div');
+                feedbackDiv.className = 'feedback';
+                feedbackDiv.innerHTML = `
+                    <button onclick="provideFeedback('${messageId}', 'helpful')">Helpful</button>
+                    <button onclick="provideFeedback('${messageId}', 'neutral')">Neutral</button>
+                    <button onclick="provideFeedback('${messageId}', 'unhelpful')">Unhelpful</button>
+                `;
+                messageDiv.appendChild(feedbackDiv);
+            }
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        async function provideFeedback(messageId, rating) {
+            try {
+                const messageDiv = document.querySelector(`[data-message-id="${messageId}"]`);
+                if (messageDiv) {
+                    const buttons = messageDiv.querySelectorAll('.feedback button');
+                    buttons.forEach(btn => {
+                        btn.classList.remove('active');
+                        if (btn.textContent.toLowerCase() === rating) {
+                            btn.classList.add('active');
+                        }
+                    });
+                }
+                
+                const response = await fetch(`${baseUrl}/feedback`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        message_id: messageId,
+                        rating: rating
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+                
+                console.log("Feedback submitted successfully");
+                
+            } catch (error) {
+                console.error("Error submitting feedback:", error);
+            }
+        }
+        
+        window.onload = function() {
+            addMessageToChat('ai', "Hello, I'm MindfulMate. I'm here to listen and provide support. How are you feeling today?");
+        };
+    </script>
+</body>
+</html>
