@@ -24,9 +24,9 @@ logging.basicConfig(
 
 load_dotenv()
 
-# Domain configuration (update these with your actual domain)
-PRODUCTION_DOMAIN = 'feelgoodbot.us'  # ← CHANGE THIS
-ALLOWED_HOSTS = [PRODUCTION_DOMAIN, f'www.{PRODUCTION_DOMAIN}', 'hackku25-bot.onrender.com']
+# Domain configuration - modified for Render compatibility
+PRODUCTION_DOMAIN = 'feelgoodbot.us'
+ALLOWED_HOSTS = ['*']  # Allow all hosts for deployment, or specify your Render URL
 
 # Initialize Anthropic client
 api_key = os.getenv("ANTHROPIC_API_KEY")
@@ -40,9 +40,7 @@ else:
 app = Flask(__name__)
 CORS(app)
 
-# Domain and security configuration
-app.config['SERVER_NAME'] = PRODUCTION_DOMAIN
-app.config['PREFERRED_URL_SCHEME'] = 'https'
+# Security configuration - removed SERVER_NAME for Render compatibility
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev_secret_key')
 
 # Initialize LLM with correct parameters
@@ -97,22 +95,16 @@ conversation_histories = {}
 
 @app.before_request
 def enforce_https_and_domain():
-    """Enforce HTTPS and correct domain"""
+    """Modified for Render compatibility"""
     # Skip these checks for health checks and static files
     if request.path.startswith('/static/') or request.path == '/health':
         return
     
     # Redirect to HTTPS if not secure
     if not request.is_secure and request.headers.get('X-Forwarded-Proto') != 'https':
-        url = request.url.replace('http://', 'https://', 1)
-        return redirect(url, code=301)
-    
-    # Redirect www to non-www (or vice versa based on preference)
-    host = request.host.lower()
-    if host.startswith('www.'):
-        return redirect(request.url.replace('www.', '', 1), code=301)
-    elif host != PRODUCTION_DOMAIN and host not in ALLOWED_HOSTS:
-        return jsonify({"error": "Invalid host"}), 400
+        if 'http://' in request.url:
+            url = request.url.replace('http://', 'https://', 1)
+            return redirect(url, code=301)
 
 @app.after_request
 def add_security_headers(response):
