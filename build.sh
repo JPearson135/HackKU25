@@ -1,11 +1,15 @@
 #!/bin/bash
 set -e  # Exit on error
 
-# Upgrade pip first
-python -m pip install --upgrade pip
+# Show Python and pip versions
+python --version
+pip --version
 
-# Install dependencies with resolution
-pip install --no-cache-dir -r requirements.txt
+# Upgrade pip and setuptools first
+python -m pip install --upgrade pip setuptools wheel
+
+# Install dependencies with exact versions
+pip install --no-cache-dir --force-reinstall -r requirements.txt
 
 # Verify installations
 pip list

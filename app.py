@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify, render_template, session, redirect
 from datetime import datetime
 import re
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from langchain_openai import ChatOpenAI
@@ -11,8 +12,9 @@ from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from flask_cors import CORS
 import logging
 import traceback
+import warnings
 
-# Configure logging
+# Configure logging before any other operations
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -22,33 +24,43 @@ logging.basicConfig(
     ]
 )
 
-load_dotenv()
+# Load .env file with explicit path and verbose logging
+env_path = Path('.') / '.env'
+load_dotenv(dotenv_path=env_path, verbose=True)
 
-# Domain configuration - modified for Render compatibility
-PRODUCTION_DOMAIN = 'feelgoodbot.us'
-ALLOWED_HOSTS = ['*']  # Allow all hosts for deployment, or specify your Render URL
-
-# Initialize Anthropic client
+# Verify environment variables
 api_key = os.getenv("ANTHROPIC_API_KEY")
 if not api_key:
-    logging.error("ANTHROPIC_API_KEY is missing. Please check your .env file.")
+    logging.error("ERROR: ANTHROPIC_API_KEY not found in .env file or environment variables")
+    logging.error("Current working directory: %s", os.getcwd())
+    logging.error("Files in directory: %s", os.listdir('.'))
+    raise ValueError("ANTHROPIC_API_KEY is required")
 elif len(api_key.strip()) < 20:
     logging.error("ANTHROPIC_API_KEY appears to be malformed. Please check the value.")
 else:
     logging.info("ANTHROPIC_API_KEY loaded successfully")
 
+# Suppress specific warnings
+warnings.filterwarnings("ignore", message="WARNING! api_key is not default parameter.")
+warnings.filterwarnings("ignore", category=UserWarning, module="langchain_core.*")
+
 app = Flask(__name__)
 CORS(app)
 
-# Security configuration - removed SERVER_NAME for Render compatibility
+# Domain configuration - modified for Render compatibility
+PRODUCTION_DOMAIN = 'feelgoodbot.us'
+ALLOWED_HOSTS = ['*']  # Allow all hosts for deployment
+
+# Security configuration
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev_secret_key')
 
-# Initialize LLM with correct parameters
+# Initialize LLM with correct parameters for latest version
 llm = ChatAnthropic(
-    model="claude-3-sonnet-20240229",
+    model_name="claude-3-sonnet-20240229",
     temperature=0.7,
     max_tokens=1024,
-    anthropic_api_key=api_key 
+    anthropic_api_key=api_key,
+    default_client_settings={}
 )
 
 CRISIS_KEYWORDS = [
