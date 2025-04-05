@@ -1,12 +1,7 @@
-import zipfile
+import kaggle 
+import os 
 import pandas as pd
 
-with zipfile.ZipFile("iris.zip", "r") as zip_ref:
-    zip_ref.extractall("data")
- 
+kaggle.api.authenticate()  # Authenticate with Kaggle API
 
-# Load the dataset
-data = pd.read_csv("data/Iris.csv")
-
-# Display the first few rows
-print(data.head())
+kaggle.api.dataset_download_files('hanaksoy/health-and-sleep-statistics', path='.', unzip=True,)
