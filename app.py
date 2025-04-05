@@ -26,7 +26,7 @@ load_dotenv()
 
 # Domain configuration (update these with your actual domain)
 PRODUCTION_DOMAIN = 'feelgoodbot.us'  # ← CHANGE THIS
-ALLOWED_HOSTS = [PRODUCTION_DOMAIN, f'www.{PRODUCTION_DOMAIN}', 'your-app.onrender.com']
+ALLOWED_HOSTS = [PRODUCTION_DOMAIN, f'www.{PRODUCTION_DOMAIN}', 'hackku25-bot.onrender.com']
 
 # Initialize Anthropic client
 api_key = os.getenv("ANTHROPIC_API_KEY")
@@ -47,7 +47,7 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev_secret_key')
 
 # Initialize LLM with correct parameters
 llm = ChatAnthropic(
-    model="claude-3-sonnet-20240229",
+    model_name="claude-3-sonnet-20240229",
     temperature=0.7,
     max_tokens=1024,
     anthropic_api_key=api_key
@@ -147,14 +147,16 @@ def test_llm():
         return jsonify({
             "success": True,
             "response": str(test.content),
-            "model": "claude-3-sonnet-20240229"
+            "model": "claude-3-sonnet-20240229",
+            "api_status": "working"
         })
     except Exception as e:
-        logging.error("LLM Test Error: %s", str(e))
+        logging.error("Detailed LLM Test Error: %s", str(e))
         return jsonify({
             "success": False,
             "error": str(e),
-            "model": "claude-3-sonnet-20240229"
+            "model": "claude-3-sonnet-20240229",
+            "api_status": "failed"
         }), 500
 
 def check_for_crisis(message):
