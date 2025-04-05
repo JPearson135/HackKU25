@@ -24,14 +24,17 @@ logging.basicConfig(
     ]
 )
 
-# Load .env file with explicit path and verbose logging
-env_path = Path('.') / '.env'
-load_dotenv(dotenv_path=env_path, verbose=True)
-
-# Verify environment variables
-api_key = os.getenv("ANTHROPIC_API_KEY")
+# Modified environment loading - checks Render's environment first
+api_key = os.environ.get("ANTHROPIC_API_KEY")  # Check Render's environment first
 if not api_key:
-    logging.error("ERROR: ANTHROPIC_API_KEY not found in .env file or environment variables")
+    # Fallback to .env file only if not in production
+    env_path = Path('.') / '.env'
+    if env_path.exists():
+        load_dotenv(dotenv_path=env_path, verbose=True)
+        api_key = os.getenv("ANTHROPIC_API_KEY")
+
+if not api_key:
+    logging.error("ERROR: ANTHROPIC_API_KEY not found in environment variables or .env file")
     logging.error("Current working directory: %s", os.getcwd())
     logging.error("Files in directory: %s", os.listdir('.'))
     raise ValueError("ANTHROPIC_API_KEY is required")
@@ -52,15 +55,14 @@ PRODUCTION_DOMAIN = 'feelgoodbot.us'
 ALLOWED_HOSTS = ['*']  # Allow all hosts for deployment
 
 # Security configuration
-app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev_secret_key')
+app.secret_key = os.getenv('FLASK_SECRET_KEY', os.environ.get('FLASK_SECRET_KEY', 'dev_secret_key'))
 
 # Initialize LLM with correct parameters for latest version
 llm = ChatAnthropic(
     model_name="claude-3-sonnet-20240229",
     temperature=0.7,
-    max_tokens=1024,
-    anthropic_api_key=api_key,
-    default_client_settings={}
+    max_tokens_to_sample=1024,  # Changed from max_tokens
+    anthropic_api_key=api_key
 )
 
 CRISIS_KEYWORDS = [
