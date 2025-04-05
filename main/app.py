@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from flask import Flask, request, jsonify, render_template, session
 from datetime import datetime
 import re
@@ -32,8 +33,7 @@ else:
     logging.info("ANTHROPIC_API_KEY loaded successfully")
 
 app = Flask(__name__)
-# Updated CORS configuration to allow all origins for all endpoints
-CORS(app)  # This allows all origins for all routes
+CORS(app)
 
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev_secret_key')
 
@@ -89,6 +89,18 @@ conversation_histories = {}
 @app.route("/")
 def home():
     return render_template("index.html")
+
+@app.route("/disclaimer")
+def show_disclaimer():
+    return render_template("disclaimer.html")
+
+@app.route("/resources")
+def show_resources():
+    return render_template("resources.html")
+
+@app.route("/test")
+def test():
+    return jsonify({"status": "success", "message": "Test route is working!"})
 
 @app.route("/test-llm")
 def test_llm():

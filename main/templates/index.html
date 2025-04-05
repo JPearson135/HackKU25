@@ -8,12 +8,32 @@
         body {
             font-family: 'Segoe UI', 'Arial', sans-serif;
             line-height: 1.6;
-            max-width: 900px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
             background-color: #f8f9fa;
             color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
+        
+        .main-content {
+            display: flex;
+            gap: 20px;
+            flex: 1;
+        }
+        
+        .chat-area {
+            flex: 2;
+            min-width: 0;
+        }
+        
+        .resources-area {
+            flex: 1;
+            min-width: 250px;
+        }
+
         header {
             text-align: center;
             margin-bottom: 20px;
@@ -153,6 +173,51 @@
         .status-ok {
             color: #388e3c;
         }
+        
+        /* Resources/Suggestions Panel Styles */
+        .resources-panel {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            padding: 20px;
+            height: 500px;
+            overflow-y: auto;
+        }
+        
+        .resources-title {
+            color: #4a6fa5;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .suggestions-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .suggestion-item {
+            background-color: #f0f7ff;
+            border-left: 3px solid #4a6fa5;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 0 5px 5px 0;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .resources-area {
+                order: -1;
+                margin-bottom: 20px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -162,22 +227,35 @@
         <div class="disclaimer">
             <strong>Important:</strong> MindfulMate is an AI assistant and not a substitute for professional therapy or medical advice. 
             In case of emergency or crisis, please contact mental health professionals or emergency services.
-            <a href="/disclaimer" target="_blank">Read full disclaimer</a>
+            <a href="disclaimer.html" target="_blank">Read full disclaimer</a>
         </div>
         <div id="connection-status"></div>
     </header>
     
-    <div id="chat-container"></div>
-    
-    <div id="input-container">
-        <input type="text" id="userInput" placeholder="Share what's on your mind..." />
-        <button onclick="sendMessage()">Send</button>
+    <div class="main-content">
+        <div class="chat-area">
+            <div id="chat-container"></div>
+            
+            <div id="input-container">
+                <input type="text" id="userInput" placeholder="Share what's on your mind..." />
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+        
+        <div class="resources-area">
+            <div class="resources-panel">
+                <h3 class="resources-title">Helpful Suggestions</h3>
+                <ul id="suggestions-list" class="suggestions-list">
+                    <!-- Suggestions will be added here dynamically -->
+                </ul>
+            </div>
+        </div>
     </div>
 
     <footer>
         <div class="footer-links">
-            <a href="/disclaimer" target="_blank">Disclaimer</a>
-            <a href="/resources" target="_blank">Mental Health Resources</a>
+            <a href="disclaimer.html" target="_blank">Disclaimer</a>
+            <a href="resources.html" target="_blank">Mental Health Resources</a>
             <a href="javascript:void(0)" onclick="clearChat()">Clear Chat</a>
             <a href="javascript:void(0)" onclick="testConnection()">Test Connection</a>
         </div>
@@ -196,6 +274,8 @@
         
         window.addEventListener('load', function() {
             testConnection();
+            // Add initial suggestion
+            addSuggestion("Take a few deep breaths when feeling overwhelmed");
         });
         
         document.getElementById('userInput').addEventListener('keypress', function(e) {
@@ -240,8 +320,19 @@
         function clearChat() {
             if (confirm("Are you sure you want to clear the chat history?")) {
                 document.getElementById('chat-container').innerHTML = '';
+                document.getElementById('suggestions-list').innerHTML = '';
                 addMessageToChat('ai', "Hello, I'm MindfulMate. I'm here to listen and provide support. How are you feeling today?");
+                // Add back the initial suggestion
+                addSuggestion("Take a few deep breaths when feeling overwhelmed");
             }
+        }
+
+        function addSuggestion(text) {
+            const suggestionsList = document.getElementById('suggestions-list');
+            const li = document.createElement('li');
+            li.className = 'suggestion-item';
+            li.textContent = text;
+            suggestionsList.appendChild(li);
         }
 
         async function sendMessage() {
@@ -290,6 +381,9 @@
                     const responseId = 'msg_' + Date.now();
                     const isCrisis = data.is_crisis || false;
                     addMessageToChat('ai', data.response, responseId, isCrisis);
+                    
+                    // Extract and add suggestions from the AI response
+                    extractAndAddSuggestions(data.response);
                 } else {
                     throw new Error("No response in API data");
                 }
@@ -313,6 +407,98 @@
                     document.getElementById('connection-status').className = 'status-error';
                 }
             }
+        }
+
+        function extractAndAddSuggestions(aiResponse) {
+            // Patterns to identify key sections in the AI's response
+            const sectionPatterns = [
+                /Practical Tips:([\s\S]*?)(?=\n\n|$)/i,
+                /Suggestions:([\s\S]*?)(?=\n\n|$)/i,
+                /You can try:([\s\S]*?)(?=\n\n|$)/i,
+                /Here are some things to try:([\s\S]*?)(?=\n\n|$)/i
+            ];
+            
+            const suggestionsList = document.getElementById('suggestions-list');
+            const uniqueSuggestions = new Set();
+            
+            // Get existing suggestions to avoid duplicates
+            const existingItems = suggestionsList.querySelectorAll('.suggestion-item');
+            existingItems.forEach(item => {
+                uniqueSuggestions.add(item.textContent.trim());
+            });
+            
+            // Extract sections that likely contain suggestions
+            let suggestionText = '';
+            sectionPatterns.forEach(pattern => {
+                const match = aiResponse.match(pattern);
+                if (match && match[1]) {
+                    suggestionText += '\n' + match[1].trim();
+                }
+            });
+            
+            // If no specific sections found, look for bullet points throughout
+            if (!suggestionText) {
+                const bulletPoints = aiResponse.matchAll(/- (.*?)(?=\n|$)/g);
+                for (const match of bulletPoints) {
+                    if (match[1]) {
+                        suggestionText += '\n' + match[1].trim();
+                    }
+                }
+            }
+            
+            // Process the extracted text to create concise suggestions
+            if (suggestionText) {
+                // Split into individual suggestions
+                let items = suggestionText.split('\n').filter(item => item.trim().length > 0);
+                
+                // Process each item to make it more concise
+                items.forEach(item => {
+                    // Remove any numbering or bullets
+                    item = item.replace(/^\d+\.\s*/, '').replace(/^-\s*/, '').trim();
+                    
+                    // Simplify common patterns
+                    item = item.replace(/^Try\s+/i, '');
+                    item = item.replace(/^Consider\s+/i, '');
+                    item = item.replace(/^You might\s+/i, '');
+                    
+                    // Remove unnecessary qualifiers
+                    item = item.replace(/such as.*$/i, '');
+                    item = item.replace(/for example.*$/i, '');
+                    item = item.replace(/like.*$/i, '');
+                    
+                    // Trim to reasonable length and remove trailing punctuation
+                    if (item.length > 100) {
+                        item = item.substring(0, 100) + '...';
+                    }
+                    item = item.replace(/[.,;:]$/, '');
+                    
+                    // Skip crisis resources and very short suggestions
+                    if (item.length > 15 && 
+                        !item.includes("988") && 
+                        !item.includes("911") &&
+                        !item.includes("emergency") &&
+                        !item.includes("lifeline")) {
+                        
+                        // Capitalize first letter
+                        if (item.length > 0) {
+                            item = item.charAt(0).toUpperCase() + item.slice(1);
+                        }
+                        
+                        uniqueSuggestions.add(item);
+                    }
+                });
+            }
+            
+            // Clear and repopulate the list to maintain order
+            suggestionsList.innerHTML = '';
+            
+            // Convert to array and sort by length (shortest first)
+            const sortedSuggestions = Array.from(uniqueSuggestions).sort((a, b) => a.length - b.length);
+            
+            // Add all unique suggestions to the list (limit to 10)
+            sortedSuggestions.slice(0, 10).forEach(suggestion => {
+                addSuggestion(suggestion);
+            });
         }
 
         function addTypingIndicator() {
