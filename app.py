@@ -58,12 +58,7 @@ ALLOWED_HOSTS = ['*']  # Allow all hosts for deployment
 app.secret_key = os.getenv('FLASK_SECRET_KEY', os.environ.get('FLASK_SECRET_KEY', 'dev_secret_key'))
 
 # Initialize LLM with correct parameters for latest version
-llm = ChatAnthropic(
-    model_name="claude-3-sonnet-20240229",
-    temperature=0.7,
-    max_tokens_to_sample=1024,  # Changed from max_tokens
-    anthropic_api_key=api_key
-)
+llm = ChatAnthropic(api_key="your_api_key")
 
 CRISIS_KEYWORDS = [
     "suicide", "kill myself", "end my life", "don't want to live",
