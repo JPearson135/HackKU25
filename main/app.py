@@ -41,7 +41,7 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev_secret_key')
 def enforce_https():
     """Redirect HTTP to HTTPS and www to non-www"""
     if request.url.startswith('http://'):
-        return redirect(request.url.replace('http://', 'https://', 1), code=301
+        return redirect(request.url.replace('http://', 'https://', 1), code=301)
     if request.host.startswith('www.'):
         return redirect(request.url.replace('www.', '', 1), code=301)
 
