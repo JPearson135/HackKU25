@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, request, jsonify, render_template, session
+from flask import Flask, request, jsonify, render_template, session, redirect
 from datetime import datetime
 import re
 import os
@@ -24,6 +24,11 @@ logging.basicConfig(
 
 load_dotenv()
 
+# Domain configuration (update these with your actual domain)
+PRODUCTION_DOMAIN = 'feelgoodbot.us'  # ← CHANGE THIS
+ALLOWED_HOSTS = [PRODUCTION_DOMAIN, f'www.{PRODUCTION_DOMAIN}', 'your-app.onrender.com']
+
+# Initialize Anthropic client
 api_key = os.getenv("ANTHROPIC_API_KEY")
 if not api_key:
     logging.error("ANTHROPIC_API_KEY is missing. Please check your .env file.")
@@ -35,18 +40,14 @@ else:
 app = Flask(__name__)
 CORS(app)
 
+# Domain and security configuration
+app.config['SERVER_NAME'] = PRODUCTION_DOMAIN
+app.config['PREFERRED_URL_SCHEME'] = 'https'
 app.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev_secret_key')
 
-@app.before_request
-def enforce_https():
-    """Redirect HTTP to HTTPS and www to non-www"""
-    if request.url.startswith('http://'):
-        return redirect(request.url.replace('http://', 'https://', 1), code=301)
-    if request.host.startswith('www.'):
-        return redirect(request.url.replace('www.', '', 1), code=301)
-
+# Initialize LLM with correct parameters
 llm = ChatAnthropic(
-    model="claude-3-7-sonnet-20250219",
+    model="claude-3-sonnet-20240229",
     temperature=0.7,
     max_tokens=1024,
     anthropic_api_key=api_key
@@ -94,6 +95,35 @@ Important disclaimers to remember:
 
 conversation_histories = {}
 
+@app.before_request
+def enforce_https_and_domain():
+    """Enforce HTTPS and correct domain"""
+    # Skip these checks for health checks and static files
+    if request.path.startswith('/static/') or request.path == '/health':
+        return
+    
+    # Redirect to HTTPS if not secure
+    if not request.is_secure and request.headers.get('X-Forwarded-Proto') != 'https':
+        url = request.url.replace('http://', 'https://', 1)
+        return redirect(url, code=301)
+    
+    # Redirect www to non-www (or vice versa based on preference)
+    host = request.host.lower()
+    if host.startswith('www.'):
+        return redirect(request.url.replace('www.', '', 1), code=301)
+    elif host != PRODUCTION_DOMAIN and host not in ALLOWED_HOSTS:
+        return jsonify({"error": "Invalid host"}), 400
+
+@app.after_request
+def add_security_headers(response):
+    """Add security headers to all responses"""
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    return response
+
 @app.route("/")
 def home():
     return render_template("index.html")
@@ -117,42 +147,14 @@ def test_llm():
         return jsonify({
             "success": True,
             "response": str(test.content),
-            "model": llm.model
+            "model": "claude-3-sonnet-20240229"
         })
     except Exception as e:
         logging.error("LLM Test Error: %s", str(e))
         return jsonify({
             "success": False,
             "error": str(e),
-            "model": llm.model if hasattr(llm, 'model') else 'unknown'
-        }), 500
-        
-@app.route("/test-llm-detailed")
-def test_llm_detailed():
-    try:
-        api_key = os.getenv("ANTHROPIC_API_KEY")
-        if not api_key:
-            return jsonify({
-                "success": False,
-                "error": "API key not found in environment"
-            }), 500
-            
-        key_preview = f"{api_key[:4]}...{api_key[-4:]}" if len(api_key) > 8 else "invalid_format"
-        
-        test = llm.invoke([HumanMessage(content="Hello")])
-        return jsonify({
-            "success": True,
-            "response": str(test.content),
-            "model": llm.model,
-            "key_format": key_preview
-        })
-    except Exception as e:
-        logging.error("LLM Test Error: %s", str(e))
-        return jsonify({
-            "success": False,
-            "error": str(e),
-            "model": llm.model if hasattr(llm, 'model') else 'unknown',
-            "key_format": key_preview if 'key_preview' in locals() else "unknown"
+            "model": "claude-3-sonnet-20240229"
         }), 500
 
 def check_for_crisis(message):
