@@ -302,7 +302,7 @@
                 const data = await response.json();
                 
                 if(data.success) {
-                    statusElement.innerHTML = `✅ API connection is working (Model: ${data.model_name})`;
+                    statusElement.innerHTML = '✅ Connected to Claude 3 Sonnet (Feb 2024)';
                     statusElement.className = 'status-ok';
                     setTimeout(() => {
                         statusElement.style.display = 'none';
