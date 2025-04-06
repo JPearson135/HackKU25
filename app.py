@@ -63,7 +63,7 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY', os.environ.get('FLASK_SECRET_KEY'
 # Initialize LLM with correct parameters
 llm = ChatAnthropic(
     anthropic_api_key=api_key,
-    model_name="claude-3-sonnet",
+    model_name="claude-3-sonnet-20240229",
     temperature=0.7,
     max_tokens=1024,
     anthropic_version="2023-06-01"
@@ -160,7 +160,7 @@ def test_llm():
         return jsonify({
             "success": True,
             "response": str(test.content),
-            "model": "claude-3-sonnet",
+            "model": "claude-3-sonnet-20240229",
             "api_status": "working"
         })
     except Exception as e:
@@ -168,7 +168,7 @@ def test_llm():
         return jsonify({
             "success": False,
             "error": str(e),
-            "model": "claude-3-sonnet",
+            "model": "claude-3-sonnet-20240229",
             "api_status": "failed"
         }), 500
 
@@ -177,7 +177,7 @@ def test_llm_detailed():
     try:
         # Use the direct Anthropic client for testing
         response = anthropic_client.messages.create(
-            model="claude-3-sonnet",
+            model="claude-3-sonnet-20240229",
             max_tokens=1024,
             messages=[{"role": "user", "content": "Hello"}]
         )
@@ -185,7 +185,7 @@ def test_llm_detailed():
         return jsonify({
             "success": True,
             "response": response.content[0].text,
-            "model": "claude-3-sonnet",
+            "model": "claude-3-sonnet-20240229",
             "api_status": "working",
             "api_key_length": len(api_key) if api_key else 0,
             "api_key_valid": bool(api_key and len(api_key.strip()) >= 20),
@@ -197,7 +197,7 @@ def test_llm_detailed():
         return jsonify({
             "success": False,
             "error": str(e),
-            "model": "claude-3-sonnet",
+            "model": "claude-3-sonnet-20240229",
             "api_status": "failed",
             "api_key_length": len(api_key) if api_key else 0,
             "api_key_valid": bool(api_key and len(api_key.strip()) >= 20),
