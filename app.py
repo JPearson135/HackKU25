@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, request, jsonify, render_template, session, redirect
 from datetime import datetime
-from anthropic import Antrhopic
+from anthropic import Anthropic
 import re
 import os
 from pathlib import Path
@@ -66,6 +66,9 @@ llm = ChatAnthropic(
     max_tokens=1024,
     anthropic_version="2023-06-01"
 )
+
+# Initialize Anthropic client
+anthropic_client = Anthropic(api_key=api_key)
 
 CRISIS_KEYWORDS = [
     "suicide", "kill myself", "end my life", "don't want to live",
@@ -195,11 +198,10 @@ def test_llm_detailed():
             "model": "claude-3-sonnet-20240229",
             "api_status": "failed",
             "api_key_length": len(api_key) if api_key else 0,
-            "api_key_valid": bool(api_key and len(api_key.strip()) >= 20,
+            "api_key_valid": bool(api_key and len(api_key.strip()) >= 20),
             "environment": os.environ.get("FLASK_ENV", "production"),
             "timestamp": datetime.now().isoformat()
         }), 500
-
 
 def check_for_crisis(message):
     message_lower = message.lower()
