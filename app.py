@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, request, jsonify, render_template, session, redirect
 from datetime import datetime
-from anthropic import Anthropic
+from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
 import re
 import os
 from pathlib import Path
@@ -60,17 +60,19 @@ ALLOWED_HOSTS = ['*']  # Allow all hosts for deployment
 # Security configuration
 app.secret_key = os.getenv('FLASK_SECRET_KEY', os.environ.get('FLASK_SECRET_KEY', 'dev_secret_key'))
 
+# Initialize Anthropic client with correct configuration
+anthropic_client = Anthropic(
+    api_key=api_key,
+    api_url="https://api.anthropic.com/v1/complete"
+)
+
 # Initialize LLM with correct parameters
 llm = ChatAnthropic(
     anthropic_api_key=api_key,
-    model_name="claude-3-sonnet-20240229",
+    model="claude-3-sonnet-20240229",
     temperature=0.7,
-    max_tokens=1024,
-    anthropic_version="2023-06-01"
+    max_tokens=1024
 )
-
-# Initialize Anthropic client
-anthropic_client = Anthropic(api_key=api_key)
 
 CRISIS_KEYWORDS = [
     "suicide", "kill myself", "end my life", "don't want to live",
@@ -176,15 +178,16 @@ def test_llm():
 def test_llm_detailed():
     try:
         # Use the direct Anthropic client for testing
-        response = anthropic_client.messages.create(
+        response = anthropic_client.completions.create(
+            prompt=f"{HUMAN_PROMPT} Hello{AI_PROMPT}",
             model="claude-3-sonnet-20240229",
-            max_tokens=1024,
-            messages=[{"role": "user", "content": "Hello"}]
+            max_tokens_to_sample=1024,
+            temperature=0.7
         )
         
         return jsonify({
             "success": True,
-            "response": response.content[0].text,
+            "response": response.completion,
             "model": "claude-3-sonnet-20240229",
             "api_status": "working",
             "api_key_length": len(api_key) if api_key else 0,
