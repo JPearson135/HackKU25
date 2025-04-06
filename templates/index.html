@@ -237,7 +237,7 @@
             <div id="chat-container"></div>
             
             <div id="input-container">
-                <input type="text" id="userInput" placeholder="Share what's on your mind..." />
+                <input type="text" id="userInput" placeholder="Type your message here...">
                 <button onclick="sendMessage()">Send</button>
             </div>
         </div>
@@ -302,7 +302,7 @@
                 const data = await response.json();
                 
                 if(data.success) {
-                    statusElement.innerHTML = '✅ Connected to Claude 3 Sonnet (Feb 2024)';
+                    statusElement.innerHTML = '✅ Connected to Claude 3 Haiku';
                     statusElement.className = 'status-ok';
                     setTimeout(() => {
                         statusElement.style.display = 'none';

@@ -63,7 +63,7 @@ ALLOWED_HOSTS = ['*']  # Allow all hosts for deployment
 app.secret_key = os.getenv('FLASK_SECRET_KEY', os.environ.get('FLASK_SECRET_KEY', 'dev_secret_key'))
 
 # UPDATED MODEL NAME: Using the full version with date
-CLAUDE_MODEL = "claude-3-opus"
+CLAUDE_MODEL = "claude-3-haiku-20240307"
 
 # Initialize LLM with correct parameters and updated model name
 llm = ChatAnthropic(
