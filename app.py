@@ -60,8 +60,9 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY', os.environ.get('FLASK_SECRET_KEY'
 # Initialize LLM with correct parameters
 llm = ChatAnthropic(
     anthropic_api_key=api_key,
-    model_name="claude-3-sonnet",
-    temperature=0.7
+    model="claude-3-sonnet-20240229",
+    temperature=0.7,
+    max_tokens=1024
 )
 
 CRISIS_KEYWORDS = [
@@ -152,7 +153,7 @@ def test_llm():
         return jsonify({
             "success": True,
             "response": str(test.content),
-            "model": "claude-3-sonnet",
+            "model": "claude-3-sonnet-20240229",
             "api_status": "working"
         })
     except Exception as e:
@@ -160,7 +161,7 @@ def test_llm():
         return jsonify({
             "success": False,
             "error": str(e),
-            "model": "claude-3-sonnet",
+            "model": "claude-3-sonnet-20240229",
             "api_status": "failed"
         }), 500
 
