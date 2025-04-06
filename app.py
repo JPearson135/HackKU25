@@ -183,7 +183,7 @@ def test_llm_detailed():
             "model": "claude-3-sonnet-20240229",
             "api_status": "working",
             "api_key_length": len(api_key) if api_key else 0,
-            "api_key_valid": bool(api_key and len(api_key.strip()) >= 20,
+            "api_key_valid": bool(api_key and len(api_key.strip()) >= 20),
             "environment": os.environ.get("FLASK_ENV", "production"),
             "timestamp": datetime.now().isoformat()
         })
