@@ -269,7 +269,7 @@
             localStorage.setItem('mindfulmate_user_id', userId);
         }
         
-        //const baseUrl = "http://127.0.0.1:5000";
+//const baseUrl = "http://127.0.0.1:5000";
         const baseUrl = "https://feelgoodbot.us";
 
         window.addEventListener('load', function() {
@@ -302,7 +302,7 @@
                 const data = await response.json();
                 
                 if(data.success) {
-                    statusElement.innerHTML = '✅ API connection is working';
+                    statusElement.innerHTML = `✅ API connection is working (Model: ${data.model_name})`;
                     statusElement.className = 'status-ok';
                     setTimeout(() => {
                         statusElement.style.display = 'none';

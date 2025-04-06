@@ -60,12 +60,15 @@ ALLOWED_HOSTS = ['*']  # Allow all hosts for deployment
 # Security configuration
 app.secret_key = os.getenv('FLASK_SECRET_KEY', os.environ.get('FLASK_SECRET_KEY', 'dev_secret_key'))
 
-# Initialize LLM with correct parameters
+# Updated model name to use the correct format - "claude-3-sonnet" without date
+CLAUDE_MODEL = "claude-3-sonnet"
+
+# Initialize LLM with correct parameters and updated model name
 llm = ChatAnthropic(
-    model_name="claude-3-sonnet-20240229",
+    model_name=CLAUDE_MODEL,  # Using the updated model name
     temperature=0.7,
     max_tokens=1024,
-    api_key=api_key  # Using the standard parameter name
+    api_key=api_key
 )
 
 # Initialize Anthropic client
@@ -159,7 +162,7 @@ def test_llm():
         return jsonify({
             "success": True,
             "response": str(test.content),
-            "model": "claude-3-sonnet-20240229",
+            "model": CLAUDE_MODEL,
             "api_status": "working"
         })
     except Exception as e:
@@ -167,16 +170,16 @@ def test_llm():
         return jsonify({
             "success": False,
             "error": str(e),
-            "model": "claude-3-sonnet-20240229",
+            "model": CLAUDE_MODEL,
             "api_status": "failed"
         }), 500
 
 @app.route("/test-llm-detailed")
 def test_llm_detailed():
     try:
-        # Use the direct Anthropic client for testing
+        # Use the direct Anthropic client for testing with updated model name
         response = anthropic_client.messages.create(
-            model="claude-3-sonnet-20240229",
+            model=CLAUDE_MODEL,  # Using the updated model name variable
             max_tokens=1024,
             messages=[{"role": "user", "content": "Hello"}]
         )
@@ -184,7 +187,7 @@ def test_llm_detailed():
         return jsonify({
             "success": True,
             "response": response.content[0].text,
-            "model": "claude-3-sonnet-20240229",
+            "model": CLAUDE_MODEL,
             "api_status": "working",
             "api_key_length": len(api_key) if api_key else 0,
             "api_key_valid": bool(api_key and len(api_key.strip()) >= 20),
@@ -193,10 +196,12 @@ def test_llm_detailed():
         })
     except Exception as e:
         logging.error(f"Detailed LLM Test Error: {str(e)}")
+        traceback_str = traceback.format_exc()
+        logging.error(f"Traceback: {traceback_str}")
         return jsonify({
             "success": False,
             "error": str(e),
-            "model": "claude-3-sonnet-20240229",
+            "model": CLAUDE_MODEL,
             "api_status": "failed",
             "api_key_length": len(api_key) if api_key else 0,
             "api_key_valid": bool(api_key and len(api_key.strip()) >= 20),
