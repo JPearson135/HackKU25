@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MindfulMate - Therapeutic AI Companion</title>
+    <title>Felix - Therapeutic AI Companion</title>
     <style>
         body {
             font-family: 'Segoe UI', 'Arial', sans-serif;
@@ -222,10 +222,10 @@
 </head>
 <body>
     <header>
-        <h1>MindfulMate</h1>
+        <h1>Felix</h1>
         <div class="tagline">A compassionate AI companion for emotional support and guidance</div>
         <div class="disclaimer">
-            <strong>Important:</strong> MindfulMate is an AI assistant and not a substitute for professional therapy or medical advice. 
+            <strong>Important:</strong> Felix is an AI assistant and not a substitute for professional therapy or medical advice. 
             In case of emergency or crisis, please contact mental health professionals or emergency services.
             <a href="disclaimer.html" target="_blank">Read full disclaimer</a>
         </div>
@@ -259,14 +259,14 @@
             <a href="javascript:void(0)" onclick="clearChat()">Clear Chat</a>
             <a href="javascript:void(0)" onclick="testConnection()">Test Connection</a>
         </div>
-        <p>© 2025 MindfulMate - Your wellness companion</p>
+        <p>© 2025 Felix - Your wellness companion</p>
     </footer>
 
     <script>
-        let userId = localStorage.getItem('mindfulmate_user_id');
+        let userId = localStorage.getItem('felix_user_id');
         if (!userId) {
             userId = 'user_' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('mindfulmate_user_id', userId);
+            localStorage.setItem('felix_user_id', userId);
         }
         
 //const baseUrl = "http://127.0.0.1:5000";
@@ -321,7 +321,7 @@
             if (confirm("Are you sure you want to clear the chat history?")) {
                 document.getElementById('chat-container').innerHTML = '';
                 document.getElementById('suggestions-list').innerHTML = '';
-                addMessageToChat('ai', "Hello, I'm MindfulMate. I'm here to listen and provide support. How are you feeling today?");
+                addMessageToChat('ai', "Hello, I'm Felix. I'm here to listen and provide support. How are you feeling today?");
                 // Add back the initial suggestion
                 addSuggestion("Take a few deep breaths when feeling overwhelmed");
             }
@@ -506,7 +506,7 @@
             const typingDiv = document.createElement('div');
             typingDiv.classList.add('message', 'ai-message');
             typingDiv.id = 'typing-indicator';
-            typingDiv.innerHTML = '<em>MindfulMate is thinking...</em>';
+            typingDiv.innerHTML = '<em>Felix is thinking...</em>';
             chatContainer.appendChild(typingDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
             return typingDiv;
@@ -530,7 +530,7 @@
             const formattedMessage = message.replace(/\n/g, '<br>');
             
             messageDiv.innerHTML = `
-                <div class="format-text"><strong>${sender === 'user' ? 'You' : 'MindfulMate'}:</strong> ${formattedMessage}</div>
+                <div class="format-text"><strong>${sender === 'user' ? 'You' : 'Felix'}:</strong> ${formattedMessage}</div>
                 <div class="timestamp">${new Date().toLocaleTimeString()}</div>
             `;
             
@@ -586,7 +586,7 @@
         }
         
         window.onload = function() {
-            addMessageToChat('ai', "Hello, I'm MindfulMate. I'm here to listen and provide support. How are you feeling today?");
+            addMessageToChat('ai', "Hello, I'm Felix. I'm here to listen and provide support. How are you feeling today?");
         };
     </script>
 </body>
