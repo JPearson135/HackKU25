@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, request, jsonify, render_template, session, redirect
 from datetime import datetime
-from anthropic import Anthropic, HUMAN_PROMPT, AI_PROMPT
+from anthropic import Anthropic
 import re
 import os
 from pathlib import Path
@@ -60,19 +60,17 @@ ALLOWED_HOSTS = ['*']  # Allow all hosts for deployment
 # Security configuration
 app.secret_key = os.getenv('FLASK_SECRET_KEY', os.environ.get('FLASK_SECRET_KEY', 'dev_secret_key'))
 
-# Initialize Anthropic client with correct configuration
-anthropic_client = Anthropic(
-    api_key=api_key,
-    api_url="https://api.anthropic.com/v1/complete"
-)
-
 # Initialize LLM with correct parameters
 llm = ChatAnthropic(
     anthropic_api_key=api_key,
-    model="claude-3-sonnet-20240229",
+    model_name="claude-3-sonnet",
     temperature=0.7,
-    max_tokens=1024
+    max_tokens=1024,
+    anthropic_version="2023-06-01"
 )
+
+# Initialize Anthropic client
+anthropic_client = Anthropic(api_key=api_key)
 
 CRISIS_KEYWORDS = [
     "suicide", "kill myself", "end my life", "don't want to live",
@@ -162,7 +160,7 @@ def test_llm():
         return jsonify({
             "success": True,
             "response": str(test.content),
-            "model": "claude-3-sonnet-20240229",
+            "model": "claude-3-sonnet",
             "api_status": "working"
         })
     except Exception as e:
@@ -170,7 +168,7 @@ def test_llm():
         return jsonify({
             "success": False,
             "error": str(e),
-            "model": "claude-3-sonnet-20240229",
+            "model": "claude-3-sonnet",
             "api_status": "failed"
         }), 500
 
@@ -178,17 +176,16 @@ def test_llm():
 def test_llm_detailed():
     try:
         # Use the direct Anthropic client for testing
-        response = anthropic_client.completions.create(
-            prompt=f"{HUMAN_PROMPT} Hello{AI_PROMPT}",
-            model="claude-3-sonnet-20240229",
-            max_tokens_to_sample=1024,
-            temperature=0.7
+        response = anthropic_client.messages.create(
+            model="claude-3-sonnet",
+            max_tokens=1024,
+            messages=[{"role": "user", "content": "Hello"}]
         )
         
         return jsonify({
             "success": True,
-            "response": response.completion,
-            "model": "claude-3-sonnet-20240229",
+            "response": response.content[0].text,
+            "model": "claude-3-sonnet",
             "api_status": "working",
             "api_key_length": len(api_key) if api_key else 0,
             "api_key_valid": bool(api_key and len(api_key.strip()) >= 20),
@@ -200,7 +197,7 @@ def test_llm_detailed():
         return jsonify({
             "success": False,
             "error": str(e),
-            "model": "claude-3-sonnet-20240229",
+            "model": "claude-3-sonnet",
             "api_status": "failed",
             "api_key_length": len(api_key) if api_key else 0,
             "api_key_valid": bool(api_key and len(api_key.strip()) >= 20),
