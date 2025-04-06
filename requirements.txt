@@ -3,7 +3,7 @@ python-dotenv==1.0.0
 anthropic>=0.49.0
 langchain-core>=0.3.45
 pydantic>=2.7.4
-langchain-anthropic==0.3.10
+langchain-anthropic>=0.3.10
 langchain-openai>=0.1.5
 flask-cors==4.0.0
 gunicorn==21.2.0

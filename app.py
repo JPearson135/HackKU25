@@ -60,7 +60,7 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY', os.environ.get('FLASK_SECRET_KEY'
 # Initialize LLM with correct parameters
 llm = ChatAnthropic(
     anthropic_api_key=api_key,
-    model_name="claude-3-sonnet-20240229",
+    model_name="claude-3-sonnet",
     temperature=0.7
 )
 
