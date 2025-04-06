@@ -37,6 +37,8 @@ if not api_key:
     if env_path.exists():
         load_dotenv(dotenv_path=env_path, verbose=True)
         api_key = os.getenv("ANTHROPIC_API_KEY")
+    # Log more detailed information about environment variables
+    logging.debug(f"Environment variables: {dict(os.environ)}")
 
 if not api_key:
     logging.error("ERROR: ANTHROPIC_API_KEY not found in environment variables or .env file")
@@ -61,7 +63,7 @@ ALLOWED_HOSTS = ['*']  # Allow all hosts for deployment
 app.secret_key = os.getenv('FLASK_SECRET_KEY', os.environ.get('FLASK_SECRET_KEY', 'dev_secret_key'))
 
 # UPDATED MODEL NAME: Using the full version with date
-CLAUDE_MODEL = "claude-3-sonnet-20240229"
+CLAUDE_MODEL = "claude-3-opus"
 
 # Initialize LLM with correct parameters and updated model name
 llm = ChatAnthropic(
@@ -179,14 +181,17 @@ def test_llm_detailed():
     try:
         # Use the direct Anthropic client for testing with updated model name
         response = anthropic_client.messages.create(
-            model=CLAUDE_MODEL,  # Using the updated model name variable
+            model=CLAUDE_MODEL,
             max_tokens=1024,
             messages=[{"role": "user", "content": "Hello"}]
         )
         
+        # Log the complete response for debugging
+        logging.debug(f"Complete API response: {response}")
+        
         return jsonify({
             "success": True,
-            "response": response.content[0].text,
+            "response": response.content[0].text if hasattr(response, 'content') and response.content else "No content returned",
             "model": CLAUDE_MODEL,
             "api_status": "working",
             "api_key_length": len(api_key) if api_key else 0,
