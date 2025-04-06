@@ -57,10 +57,11 @@ ALLOWED_HOSTS = ['*']  # Allow all hosts for deployment
 # Security configuration
 app.secret_key = os.getenv('FLASK_SECRET_KEY', os.environ.get('FLASK_SECRET_KEY', 'dev_secret_key'))
 
-# Initialize LLM with correct parameters for latest version
+# Initialize LLM with correct parameters
 llm = ChatAnthropic(
-    api_key=api_key,  
-    model_name="claude-3-sonnet-20240229"  
+    anthropic_api_key=api_key,
+    model_name="claude-3-sonnet-20240229",
+    temperature=0.7
 )
 
 CRISIS_KEYWORDS = [
