@@ -164,6 +164,33 @@ def test_llm():
             "api_status": "failed"
         }), 500
 
+@app.route("/test-llm-detailed")
+def test_llm_detailed():
+    try:
+        test = llm.invoke([HumanMessage(content="Hello")])
+        return jsonify({
+            "success": True,
+            "response": str(test.content),
+            "model": "claude-3-sonnet-20240229",
+            "api_status": "working",
+            "api_key_length": len(api_key) if api_key else 0,
+            "api_key_valid": bool(api_key and len(api_key.strip()) >= 20),
+            "environment": os.environ.get("FLASK_ENV", "production"),
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        logging.error("Detailed LLM Test Error: %s", str(e))
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "model": "claude-3-sonnet-20240229",
+            "api_status": "failed",
+            "api_key_length": len(api_key) if api_key else 0,
+            "api_key_valid": bool(api_key and len(api_key.strip()) >= 20),
+            "environment": os.environ.get("FLASK_ENV", "production"),
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
 def check_for_crisis(message):
     message_lower = message.lower()
     for keyword in CRISIS_KEYWORDS:
