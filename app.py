@@ -152,7 +152,7 @@ def test_llm():
         return jsonify({
             "success": True,
             "response": str(test.content),
-            "model": "claude-3-sonnet-20240229",
+            "model": "claude-3-sonnet",
             "api_status": "working"
         })
     except Exception as e:
@@ -160,7 +160,7 @@ def test_llm():
         return jsonify({
             "success": False,
             "error": str(e),
-            "model": "claude-3-sonnet-20240229",
+            "model": "claude-3-sonnet",
             "api_status": "failed"
         }), 500
 
