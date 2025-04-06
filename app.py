@@ -49,6 +49,8 @@ warnings.filterwarnings("ignore", message="WARNING! api_key is not default param
 warnings.filterwarnings("ignore", category=UserWarning, module="langchain_core.*")
 
 app = Flask(__name__)
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+app.config['JSON_AS_ASCII'] = False
 CORS(app)
 
 # Domain configuration - modified for Render compatibility
@@ -61,7 +63,7 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY', os.environ.get('FLASK_SECRET_KEY'
 # Initialize LLM with correct parameters
 llm = ChatAnthropic(
     anthropic_api_key=api_key,
-    model_name="claude-3-sonnet-20240229",
+    model_name="claude-3-sonnet",
     temperature=0.7,
     max_tokens=1024,
     anthropic_version="2023-06-01"
@@ -158,7 +160,7 @@ def test_llm():
         return jsonify({
             "success": True,
             "response": str(test.content),
-            "model": "claude-3-sonnet-20240229",
+            "model": "claude-3-sonnet",
             "api_status": "working"
         })
     except Exception as e:
@@ -166,7 +168,7 @@ def test_llm():
         return jsonify({
             "success": False,
             "error": str(e),
-            "model": "claude-3-sonnet-20240229",
+            "model": "claude-3-sonnet",
             "api_status": "failed"
         }), 500
 
@@ -175,7 +177,7 @@ def test_llm_detailed():
     try:
         # Use the direct Anthropic client for testing
         response = anthropic_client.messages.create(
-            model="claude-3-sonnet-20240229",
+            model="claude-3-sonnet",
             max_tokens=1024,
             messages=[{"role": "user", "content": "Hello"}]
         )
@@ -183,7 +185,7 @@ def test_llm_detailed():
         return jsonify({
             "success": True,
             "response": response.content[0].text,
-            "model": "claude-3-sonnet-20240229",
+            "model": "claude-3-sonnet",
             "api_status": "working",
             "api_key_length": len(api_key) if api_key else 0,
             "api_key_valid": bool(api_key and len(api_key.strip()) >= 20),
@@ -195,7 +197,7 @@ def test_llm_detailed():
         return jsonify({
             "success": False,
             "error": str(e),
-            "model": "claude-3-sonnet-20240229",
+            "model": "claude-3-sonnet",
             "api_status": "failed",
             "api_key_length": len(api_key) if api_key else 0,
             "api_key_valid": bool(api_key and len(api_key.strip()) >= 20),
