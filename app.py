@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, request, jsonify, render_template, session, redirect
 from datetime import datetime
+from anthropic import Antrhopic
 import re
 import os
 from pathlib import Path
@@ -60,9 +61,10 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY', os.environ.get('FLASK_SECRET_KEY'
 # Initialize LLM with correct parameters
 llm = ChatAnthropic(
     anthropic_api_key=api_key,
-    model="claude-3-sonnet-20240229",
+    model_name="claude-3-sonnet-20240229",
     temperature=0.7,
-    max_tokens=1024
+    max_tokens=1024,
+    anthropic_version="2023-06-01"
 )
 
 CRISIS_KEYWORDS = [
@@ -168,29 +170,36 @@ def test_llm():
 @app.route("/test-llm-detailed")
 def test_llm_detailed():
     try:
-        test = llm.invoke([HumanMessage(content="Hello")])
+        # Use the direct Anthropic client for testing
+        response = anthropic_client.messages.create(
+            model="claude-3-sonnet-20240229",
+            max_tokens=1024,
+            messages=[{"role": "user", "content": "Hello"}]
+        )
+        
         return jsonify({
             "success": True,
-            "response": str(test.content),
+            "response": response.content[0].text,
             "model": "claude-3-sonnet-20240229",
             "api_status": "working",
             "api_key_length": len(api_key) if api_key else 0,
-            "api_key_valid": bool(api_key and len(api_key.strip()) >= 20),
+            "api_key_valid": bool(api_key and len(api_key.strip()) >= 20,
             "environment": os.environ.get("FLASK_ENV", "production"),
             "timestamp": datetime.now().isoformat()
         })
     except Exception as e:
-        logging.error("Detailed LLM Test Error: %s", str(e))
+        logging.error(f"Detailed LLM Test Error: {str(e)}")
         return jsonify({
             "success": False,
             "error": str(e),
             "model": "claude-3-sonnet-20240229",
             "api_status": "failed",
             "api_key_length": len(api_key) if api_key else 0,
-            "api_key_valid": bool(api_key and len(api_key.strip()) >= 20),
+            "api_key_valid": bool(api_key and len(api_key.strip()) >= 20,
             "environment": os.environ.get("FLASK_ENV", "production"),
             "timestamp": datetime.now().isoformat()
         }), 500
+
 
 def check_for_crisis(message):
     message_lower = message.lower()
