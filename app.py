@@ -145,15 +145,15 @@ def add_security_headers(response):
 
 @app.route("/")
 def home():
-    return render_template("index.html")
+    return render_template("pages/index.html")
 
 @app.route("/disclaimer")
 def show_disclaimer():
-    return render_template("disclaimer.html")
+    return render_template("pages/disclaimer.html")
 
 @app.route("/resources")
 def show_resources():
-    return render_template("resources.html")
+    return render_template("pages/resources.html")
 
 @app.route("/test")
 def test():
