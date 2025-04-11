@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from flask import Flask, request, jsonify, render_template, session, redirect
+from flask import Flask, request, jsonify, render_template, session, redirect, send_from_directory
 from datetime import datetime
 from anthropic import Anthropic
 import re
@@ -50,7 +50,7 @@ elif len(api_key.strip()) < 20:
 else:
     logging.info("ANTHROPIC_API_KEY loaded successfully")
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='pages')
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 app.config['JSON_AS_ASCII'] = False
 CORS(app)
@@ -103,10 +103,9 @@ Guidelines:
 4. Try to give helpful tips that could offer improvment
 5. Structure your response in these sections when applicable:
    - Understanding (validating their feelings)
-   - Perspective (offering a thoughtful view)
-   - Practical Tips (2-3 specific actionable suggestions)
-   - Question (one thoughtful question to promote reflection)
-6. Maintain professional boundaries and never claim to replace therapy
+   - Practical Tips (2-3 specific actionable suggestions listed by bullet points)
+   - Question (one thoughtful question to promote reflection and give insight)
+6. Maintain professional boundaries
 7. For crisis situations:
    - Provide immediate validation
    - Offer crisis resources
@@ -145,15 +144,15 @@ def add_security_headers(response):
 
 @app.route("/")
 def home():
-    return render_template("pages/index.html")
+    return render_template("index.html")
 
 @app.route("/disclaimer")
 def show_disclaimer():
-    return render_template("pages/disclaimer.html")
+    return send_from_directory('pages', 'disclaimer.html')
 
 @app.route("/resources")
 def show_resources():
-    return render_template("pages/resources.html")
+    return send_from_directory('pages', 'resources.html')
 
 @app.route("/test")
 def test():
